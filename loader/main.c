@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <wchar.h>
 #include <wctype.h>
@@ -558,7 +559,6 @@ extern void *__cxa_finalize;
 extern void *__cxa_call_unexpected;
 extern void *__gnu_unwind_frame;
 extern void *__stack_chk_fail;
-int open(const char *pathname, int flags);
 
 static int __stack_chk_guard_fake = 0x42424242;
 
@@ -678,7 +678,7 @@ void glCompressedTexSubImage2D() {
 	printf("glCompressedTexSubImage2D\n");
 }
 
-void glGetUniformBlockIndex() {
+void glGetUniformBlockIndex_fake(void) {
 	printf("glGetUniformBlockIndex\n");
 }
 
@@ -986,12 +986,12 @@ void __assert2(int a) {
 
 pthread_t *SDL_CreateThread_fake(int (*fn)(void *data), const char *name, void *data) {
 	pthread_t thd;
-	pthread_create(&thd, NULL, fn, data);
-	return thd;
+	pthread_create(&thd, NULL, (void *(*)(void *))fn, data);
+	return (pthread_t *)(uintptr_t)thd;
 }
 
 void SDL_WaitThread_fake(pthread_t *thread, int *status) {
-	pthread_join(*thread, status);
+	pthread_join(*thread, (void **)status);
 }
 
 void SDL_DetachThread_fake(pthread_t *thread) {
@@ -1864,7 +1864,7 @@ void *CallObjectMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
 	int lang = -1;
 	switch (methodID) {
 	default:
-		return 0x34343434;
+		return (void *)(uintptr_t)0x34343434;
 	}
 }
 
@@ -2019,11 +2019,11 @@ void *ShaderProgram(void *this, const char *vp, const char *fp) {
 	// Game has a brainfart and attempts to use GLSL ES 3.00 shader even if it has a GLSL ES 1.3 variant
 	if (fp == rrm_mod.text_base + 0x000BF5E9) {
 		printf("Patching fp from 0x000BF5E9 (3.00 -> 1.00)\n");
-		fp = rrm_mod.text_base + 0x000C5022;
+		fp = (const char *)(rrm_mod.text_base + 0x000C5022);
 	}
 	if (fp == rrm_mod.text_base + 0x000DFD3C) {
 		printf("Patching fp from 0x000DFD3C (3.00 -> 1.00)\n");
-		fp = rrm_mod.text_base + 0x000C5022;
+		fp = (const char *)(rrm_mod.text_base + 0x000C5022);
 	}
 	if (vp == rrm_mod.text_base + 0x000D2EC1) {
 		printf("Patching 2D shaders (2D)\n");
